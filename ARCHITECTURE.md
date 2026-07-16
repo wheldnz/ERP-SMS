@@ -1,109 +1,76 @@
 # ARCHITECTURE.md — System & Application Architecture Blueprint
 
-## 🏛️ 1. High-Level Multi-Company & Enterprise Architecture
+## 🏛️ 1. Multi-Company Matrix Architecture
 
-Sistem **ERP-SMS** dirancang menggunakan arsitektur **Multi-Company (Holding Group)** bawaan ERPNext v15. Arsitektur ini memungkinkan **5 Perusahaan (Subsidiary)** beroperasi secara mandiri dalam satu instalasi database terpadu, sekaligus memberikan akses pemantauan (*Consolidated Dashboard & Financial Statements*) bagi para Stakeholder / Direksi di tingkat Holding.
+Sistem **ERP-SMS** dirancang menggunakan arsitektur **Multi-Company Full Matrix Holding Group**. Dalam arsitektur ini, **setiap Perusahaan (Subsidiary Entity)** beroperasi sebagai entitas bisnis mandiri yang memiliki **6 Divisi Internal Lengkap** di dalam struktur organisasinya sendiri:
 
 ```mermaid
 graph TD
-    subgraph Holding Level - Stakeholders / Board of Directors
-        Holding[SMS Group Holding - Consolidated View]
+    subgraph Level Holding - Executive Stakeholders / Board of Directors
+        Holding[SMS Group Holding - Consolidated Analytics & Global Monitoring]
     end
 
-    subgraph 5 Independent Operating Companies (Subsidiaries)
-        C1[Company 1: PT SMS Aftersales Jkt]
-        C2[Company 2: PT SMS Aftersales Sby]
-        C3[Company 3: PT SMS Insurance Partner]
-        C4[Company 4: PT SMS Logistic & Parts]
-        C5[Company 5: PT SMS Retail Network]
+    subgraph 5 Independent Full-Suite Operating Companies
+        C1[Company 1: PT SMS Region 1]
+        C2[Company 2: PT SMS Region 2]
+        C3[Company 3: PT SMS Region 3]
+        C4[Company 4: PT SMS Region 4]
+        C5[Company 5: PT SMS Region 5]
     end
 
-    Holding ==>|Consolidated Financials & Inter-Company Transfer| C1
-    Holding ==>|Real-time Group Analytics| C2
-    Holding ==>|Global Inventory & Claim Monitoring| C3
-    Holding ==>|Executive Dashboard| C4
-    Holding ==>|Group Profit & Loss| C5
+    Holding ==> C1
+    Holding ==> C2
+    Holding ==> C3
+    Holding ==> C4
+    Holding ==> C5
 
-    subgraph Data & Resource Isolation per Company
-        C1 --- W1[(Warehouse & COA PT 1)]
-        C2 --- W2[(Warehouse & COA PT 2)]
-        C3 --- W3[(Insurance Policies PT 3)]
-        C4 --- W4[(Central Parts Stock PT 4)]
-        C5 --- W5[(Retail Outlets PT 5)]
+    subgraph Struktur 6 Divisi Internal per Perusahaan
+        D1[🛡️ Divisi Insurance]
+        D2[👥 Divisi HRD]
+        D3[🛍️ Divisi Retail]
+        D4[🌐 Divisi Network]
+        D5[💰 Divisi Accounting]
+        D6[📦 Divisi Warehouse]
     end
+
+    C1 --- D1 & D2 & D3 & D4 & D5 & D6
+    C2 --- D1 & D2 & D3 & D4 & D5 & D6
+    C3 --- D1 & D2 & D3 & D4 & D5 & D6
+    C4 --- D1 & D2 & D3 & D4 & D5 & D6
+    C5 --- D1 & D2 & D3 & D4 & D5 & D6
 ```
 
 ---
 
-## 🔒 2. Prinsip Isosiasi Data & Konsolidasi (Data Isolation & Consolidation)
+## 🔒 2. Matriks Struktur Organisasi di ERPNext (Company & Department Hierarchy)
 
-1. **Pemisahan Keuangan (Legal Chart of Accounts):**
-   - Masing-masing dari 5 Perusahaan memiliki **Chart of Accounts (COA)**, Nomor Pajak (NPWP), dan Rekening Bank terpisah.
-   - Seluruh transaksi `Sales Invoice`, `Purchase Invoice`, dan `Journal Entry` terikat pada field `company` spesifik.
-   - **Stakeholder View:** Stakeholder dapat melihat Laporan Laba/Rugi (*Profit & Loss*) dan Neraca (*Balance Sheet*) per masing-masing PT, maupun **Consolidated Financial Statement** gabungan kelima perusahaan.
-
-2. **Isolasi Gudang & Stok (Stock & Warehouse Isolation):**
-   - Setiap Gudang (*Warehouse*) diidentifikasi secara tegas pemiliknya, contoh: `Gudang Utama - PT SMS Logistic`, `Gudang Outlet - PT SMS Retail Network`.
-   - Transaksi perpindahan stok antar perusahaan menggunakan fitur bawaan **Inter-Company Transactions** (Sales Order di PT A otomatis mengenerate Purchase Order di PT B).
-
-3. **Multi-Company User Permissions:**
-   - **Staf Operasional PT A:** Diberikan `User Permission` `Company = PT A`. Mereka HANYA bisa melihat transaksi, stok, dan laporan milik PT A.
-   - **Stakeholder / Direksi Holding:** Diberikan role `SMS Holding Executive` TANPA pembatasan `Company`, sehingga bisa memantau dan membandingkan performa 5 perusahaan secara real-time.
-
----
-
-## 📂 3. Struktur Modul & Custom App Directory Layout
-
-Aplikasi kustom `sms_aftersales` memiliki modul internal yang diisolasi berdasarkan divisi dan domain fungsi:
+Pemetaan hirarki di Frappe/ERPNext dikonfigurasi sebagai berikut:
 
 ```
-apps/sms_aftersales/
-├── sms_aftersales/
-│   ├── hooks.py                        <-- Central Frappe Integration Event Hooks
-│   ├── patches.txt                     <-- DB Migration Patch Registry
-│   ├── fixtures/                       <-- Custom Fields, Property Setters JSON
-│   ├── insurance/                      <-- Divisi Asuransi Modul
-│   ├── retail_network/                 <-- Divisi Retail & Service Center Network
-│   ├── hr_service/                     <-- Divisi HRD & Teknisi Integration
-│   ├── api/                            <-- REST API Endpoints untuk Mobile/External Integrasi
-│   └── public/                         <-- Static Assets (CSS, JS, Custom UI Widgets)
+Frappe Core Organization Structure:
+├── Company: PT SMS Region 1 (Surabaya)
+│   ├── Department: Insurance - PT 1
+│   ├── Department: HRD - PT 1
+│   ├── Department: Retail - PT 1
+│   ├── Department: Network - PT 1
+│   ├── Department: Accounting - PT 1
+│   └── Department: Warehouse - PT 1
+│       └── Warehouse: Main Spareparts - PT 1
+├── Company: PT SMS Region 2 (Jakarta)
+│   ├── Department: Insurance - PT 2
+│   ├── Department: HRD - PT 2
+│   ├── Department: Retail - PT 2
+│   ├── Department: Network - PT 2
+│   ├── Department: Accounting - PT 2
+│   └── Department: Warehouse - PT 2
+│       └── Warehouse: Main Spareparts - PT 2
+... (Berlaku persis sama hingga PT SMS Region 5)
 ```
 
 ---
 
-## 🔄 4. Integritas Hooks & Override Strategy
+## 🔍 3. Data Isolation Matrix (Company + Department Isolation)
 
-Untuk memperluas atau mengubah perilaku standar ERPNext tanpa mengubah kodenya, file `hooks.py` dikonfigurasi sebagai berikut:
-
-```python
-# apps/sms_aftersales/sms_aftersales/hooks.py
-
-app_name = "sms_aftersales"
-app_title = "SMS After Sales System"
-
-# 1. Export Fixtures Otomatis
-fixtures = [
-    {"dt": "Custom Field", "filters": [["module", "=", "SMS Aftersales"]]},
-    {"dt": "Property Setter", "filters": [["module", "=", "SMS Aftersales"]]},
-    {"dt": "Role Profile", "filters": [["role_profile", "like", "SMS %"]]}
-]
-
-# 2. Event Hooks Dokumen Standar ERPNext (Multi-Company aware)
-doc_events = {
-    "Serial No": {
-        "on_update": "sms_aftersales.retail_network.events.sync_serial_warranty"
-    },
-    "Stock Entry": {
-        "on_submit": "sms_aftersales.warehouse.events.validate_aftersales_parts_dispatch"
-    }
-}
-```
-
----
-
-## ⚡ 5. Background Processing & Caching Strategy
-
-1. **Redis Cache (Port 13000):**
-   - Caching master data per perusahaan.
-2. **Frappe RQ (Redis Queue):**
-   - Background job untuk mengkonsolidasi laporan neraca bulanan kelima anak perusahaan ke holding.
+- **Staf Divisi Retail di PT 1:** Hanya bisa mengakses data penerimaan barang (`SMS Service Intake`) di `Company = PT 1` dan `Department = Retail`.
+- **Manager Divisi Insurance di PT 2:** Hanya bisa melakukan approval klaim (`SMS Insurance Claim`) di `Company = PT 2`.
+- **Stakeholder Holding:** Memiliki hak akses lintas 5 Perusahaan dan 6 Divisi tanpa batasan (`Full Consolidated Access`).

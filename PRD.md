@@ -1,53 +1,62 @@
-# PRD.md — Product Requirement Document (ERP-SMS Multi-Company)
+# PRD.md — Product Requirement Document (Full Matrix Multi-Company ERP)
 
 ## 🎯 1. Objective & Product Vision
-Membangun sistem terintegrasi **ERP-SMS** berbasis ERPNext v15 untuk mengkonsolidasi **5 Perusahaan (Subsidiaries)** ke dalam satu sistem ERP Holding. 
+Membangun sistem terintegrasi **ERP-SMS** berbasis ERPNext v15 untuk mengkonsolidasi **5 Perusahaan Mandiri**, di mana **setiap perusahaan menjalankan unit bisnis lengkap dengan 6 divisi internal**:
 
-Sistem ini menjamin bahwa setiap anak perusahaan dapat mengelola keuangan, gudang suku cadang, dan operasionalnya secara independen atas nama badan hukum (PT) masing-masing, sementara para **Stakeholder / Direksi** memiliki akses **Consolidated Executive Dashboard** real-time untuk memantau performa grup.
+1. **🛡️ Divisi Insurance:** Pengelolaan polis pelanggan & klaim garansi internal PT masing-masing.
+2. **👥 Divisi HRD:** Pengelolaan absensi teknisi, kompensasi & KPI servis internal PT masing-masing.
+3. **🛍️ Divisi Retail:** Penjualan produk & penerimaan unit rusak di gerai milik PT masing-masing.
+4. **🌐 Divisi Network:** Manajemen cabang & mitra servis dalam jaringan PT masing-masing.
+5. **💰 Divisi Accounting:** Pembukuan neraca, Laba/Rugi, dan pembukuan resmi atas nama PT masing-masing.
+6. **📦 Divisi Warehouse:** Pengelolaan stok suku cadang & gudang milik PT masing-masing.
 
----
-
-## 🏢 2. Arsitektur Multi-Perusahaan (5 Entities Structure)
-
-| Kode Entity | Nama Badan Hukum (Contoh) | Lingkup Operasional Utama |
-|---|---|---|
-| **HOLDING** | `SMS Group Holding` | Konsolidasi Keuangan Group & Monitoring Direksi |
-| **PT 1** | `PT SMS Aftersales Jakarta` | Operasional Service Center & Repair Jabodetabek |
-| **PT 2** | `PT SMS Aftersales Surabaya` | Operasional Service Center & Repair Jawa Timur |
-| **PT 3** | `PT SMS Insurance Partner` | Pengelolaan Polis & Penjaminan Klaim Asuransi |
-| **PT 4** | `PT SMS Logistic & Spareparts` | Gudang Pusat & Impor Suku Cadang |
-| **PT 5** | `PT SMS Retail Store Network` | Jaringan Gerai Penerimaan Unit Retail |
+**Stakeholder Goal:** Mengamati dan membandingkan performa operasional serta keuangan dari ke-5 perusahaan tersebut secara individual maupun terintegrasi (*Consolidated Holding Group Analytics*).
 
 ---
 
-## 👥 3. User Personas & Permissions Matrix
+## 🏢 2. Struktur Matriks 5 Perusahaan x 6 Divisi
 
-| Persona | Entitas (Company Scope) | Hak Akses Utama |
-|---|---|---|
-| **Stakeholder / Director** | 🌐 All 5 Companies | Executive Dashboard, Consolidated Financial Statements, Group Stock View |
-| **Branch Manager PT 1** | 🏢 Restricted to PT 1 | Full Operational Access for PT 1 only |
-| **Insurance Officer PT 3** | 🏢 Restricted to PT 3 | Management of Policies & Claims for PT 3 |
-| **Warehouse Keeper PT 4** | 🏢 Restricted to PT 4 | Central Parts Warehouse Stock Entries & Inter-Company Transfer |
-| **Retail Staff PT 5** | 🏢 Restricted to PT 5 | Service Intake at PT 5 Outlets |
-
----
-
-## 📋 4. Key Multi-Company Functional Requirements
-
-### 📊 A. Multi-Company Financial Consolidation (Holding Stakeholders)
-1. **F-MC-01:** Stakeholder dapat melihat Laporan Laba/Rugi (*Profit & Loss*) dan Neraca (*Balance Sheet*) per masing-masing PT maupun laporan konsolidasi gabungan (Holding).
-2. **F-MC-02:** *Inter-Company Auto Elimination:* Transaksi penjualan/pembelian internal antar 5 anak perusahaan otomatis ditandai sebagai *Inter-Company Trade* untuk keperluan eliminasi konsolidasi akuntansi.
-
-### 📦 B. Inter-Company Stock Transfer (PT Logistic ➔ PT Service)
-1. **F-MC-03:** Ketika PT 1 (Service Center) membutuhkan sparepart dari PT 4 (Gudang Pusat Logistik), sistem menyediakan workflow **Inter-Company Purchase Order (PO) ➔ Sales Order (SO)** otomatis.
-2. **F-MC-04:** Penelusuran *Serial No* sparepart bersifat global sehingga riwayat garansi pabrikan tetap terlacak meskipun barang telah dijual antar anak perusahaan.
-
-### 🛡️ C. Cross-Company Insurance Claim Settlement (PT Insurance ➔ PT Repair)
-1. **F-MC-05:** Ketika klaim asuransi pelanggan disetujui di PT 3 (Insurance), sistem otomatis memicu pembentukan piutang di PT 1 (Service Center yang mengerjakan unit) dan utang klaim di PT 3.
+```
+                               ┌──────────────────────────────────────────────────────────┐
+                               │                 SMS Group Holding                        │
+                               │  (Stakeholder Consolidated Monitoring & Analytics)       │
+                               └────────────────────────────┬─────────────────────────────┘
+                                                            │
+        ┌───────────────────┬───────────────────┼───────────────────┬───────────────────┐
+        ▼                   ▼                   ▼                   ▼                   ▼
+┌───────────────┐   ┌───────────────┐   ┌───────────────┐   ┌───────────────┐   ┌───────────────┐
+│  Perusahaan 1 │   │  Perusahaan 2 │   │  Perusahaan 3 │   │  Perusahaan 4 │   │  Perusahaan 5 │
+├───────────────┤   ├───────────────┤   ├───────────────┤   ├───────────────┤   ├───────────────┤
+│ • Insurance   │   │ • Insurance   │   │ • Insurance   │   │ • Insurance   │   │ • Insurance   │
+│ • HRD         │   │ • HRD         │   │ • HRD         │   │ • HRD         │   │ • HRD         │
+│ • Retail      │   │ • Retail      │   │ • Retail      │   │ • Retail      │   │ • Retail      │
+│ • Network     │   │ • Network     │   │ • Network     │   │ • Network     │   │ • Network     │
+│ • Accounting  │   │ • Accounting  │   │ • Accounting  │   │ • Accounting  │   │ • Accounting  │
+│ • Warehouse   │   │ • Warehouse   │   │ • Warehouse   │   │ • Warehouse   │   │ • Warehouse   │
+└───────────────┘   └───────────────┘   └───────────────┘   └───────────────┘   └───────────────┘
+```
 
 ---
 
-## 🔒 5. Non-Functional Requirements (NFR)
+## 👥 3. User Personas & Scope Alignment
 
-1. **Strict Data Privacy:** Staf dari PT A sama sekali tidak boleh melihat dokumen transaksi atau saldo bank milik PT B.
-2. **Consolidated Performance:** Dashboard Stakeholder yang menggabungkan analytics 5 anak perusahaan harus memuat data dalam waktu di bawah **2.5 detik**.
+| Level User | Perusahaan (Company) | Divisi (Department) | Hak Akses Utama |
+|---|---|---|---|
+| **Stakeholder / Direksi** | 🌐 All 5 Companies | 🌐 All 6 Divisions | Executive Consolidated Dashboard, Group P&L, Stock & Claim Matrix |
+| **Branch Manager PT 1** | 🏢 PT 1 Only | 🌐 All 6 Divisions in PT 1 | Memantau seluruh operasional 6 divisi khusus di PT 1 |
+| **Retail Staff PT 1** | 🏢 PT 1 Only | 🛍️ Retail Dept | Input `SMS Service Intake` khusus gerai PT 1 |
+| **Insurance Assessor PT 2**| 🏢 PT 2 Only | 🛡️ Insurance Dept | Approval `SMS Insurance Claim` khusus transaksi PT 2 |
+| **Warehouse Keeper PT 3** | 🏢 PT 3 Only | 📦 Warehouse Dept | Kelola `Stock Entry` & Gudang khusus milik PT 3 |
+
+---
+
+## 📋 4. Key Matrix Requirements
+
+### 📊 A. Group Benchmarking & Performance Comparison (Stakeholders)
+1. **F-MX-01:** Stakeholder dapat membandingkan KPI kinerja antar 5 perusahaan secara berdampingan (*Side-by-Side Comparison*):
+   - Perbandingan Total Klaim Asuransi (PT 1 vs PT 2 vs PT 3 vs PT 4 vs PT 5).
+   - Perbandingan Turn-Around-Time (TAT) Servis Teknisi antar PT.
+   - Perbandingan Omset Retail & Profit Margin antar PT.
+
+### 🔒 B. Dual Isolation (Company + Department)
+1. **F-MX-02:** Sistem menerapkan *Dual Isolation Constraint*: Staf Divisi Warehouse di PT 1 tidak bisa melihat data Divisi Warehouse di PT 2, maupun data Divisi Accounting di PT 1 yang bukan wewenangnya.
