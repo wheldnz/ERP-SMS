@@ -1,34 +1,58 @@
 # ARCHITECTURE.md — System & Application Architecture Blueprint
 
-## 🏛️ 1. High-Level System Architecture
+## 🏛️ 1. High-Level Multi-Company & Enterprise Architecture
 
-Sistem **ERP-SMS** dibangun di atas ekosistem **Frappe v15 & ERPNext v15**. Seluruh arsitektur memisahkan antara layer penyimpan data, eksekusi latar belakang (background jobs), real-time notification socket, dan reverse proxy Nginx.
+Sistem **ERP-SMS** dirancang menggunakan arsitektur **Multi-Company (Holding Group)** bawaan ERPNext v15. Arsitektur ini memungkinkan **5 Perusahaan (Subsidiary)** beroperasi secara mandiri dalam satu instalasi database terpadu, sekaligus memberikan akses pemantauan (*Consolidated Dashboard & Financial Statements*) bagi para Stakeholder / Direksi di tingkat Holding.
 
 ```mermaid
 graph TD
-    User([User Desktop / Mobile Browser / POS Counter]) -->|HTTPS Port 443| Nginx[Nginx Web Server / Reverse Proxy]
-    
-    subgraph VPS Enterprise Server
-        Nginx -->|Socket / Port 8000| Gunicorn[Gunicorn WSGI App Server]
-        Nginx -->|Port 9000| SocketIO[Node.js Socket.IO Real-time Events]
-        
-        Gunicorn -->|Frappe Framework| App[Custom App: sms_aftersales & ERPNext Core]
-        
-        App -->|Read/Write| MariaDB[(MariaDB 10.6+ Transactional DB)]
-        App -->|Pub/Sub & Cache| RedisCache[(Redis Cache - Port 13000)]
-        App -->|Enqueue Jobs| RedisQueue[(Redis Queue - Port 11000)]
-        
-        RedisQueue --> Workers[Background Workers / Python RQ Queues]
-        Workers -->|Async Processing| MariaDB
-        Workers -->|Push Notification| SocketIO
+    subgraph Holding Level - Stakeholders / Board of Directors
+        Holding[SMS Group Holding - Consolidated View]
     end
 
-    SocketIO -->|WebSocket Event| User
+    subgraph 5 Independent Operating Companies (Subsidiaries)
+        C1[Company 1: PT SMS Aftersales Jkt]
+        C2[Company 2: PT SMS Aftersales Sby]
+        C3[Company 3: PT SMS Insurance Partner]
+        C4[Company 4: PT SMS Logistic & Parts]
+        C5[Company 5: PT SMS Retail Network]
+    end
+
+    Holding ==>|Consolidated Financials & Inter-Company Transfer| C1
+    Holding ==>|Real-time Group Analytics| C2
+    Holding ==>|Global Inventory & Claim Monitoring| C3
+    Holding ==>|Executive Dashboard| C4
+    Holding ==>|Group Profit & Loss| C5
+
+    subgraph Data & Resource Isolation per Company
+        C1 --- W1[(Warehouse & COA PT 1)]
+        C2 --- W2[(Warehouse & COA PT 2)]
+        C3 --- W3[(Insurance Policies PT 3)]
+        C4 --- W4[(Central Parts Stock PT 4)]
+        C5 --- W5[(Retail Outlets PT 5)]
+    end
 ```
 
 ---
 
-## 📂 2. Struktur Modul & Custom App Directory Layout
+## 🔒 2. Prinsip Isosiasi Data & Konsolidasi (Data Isolation & Consolidation)
+
+1. **Pemisahan Keuangan (Legal Chart of Accounts):**
+   - Masing-masing dari 5 Perusahaan memiliki **Chart of Accounts (COA)**, Nomor Pajak (NPWP), dan Rekening Bank terpisah.
+   - Seluruh transaksi `Sales Invoice`, `Purchase Invoice`, dan `Journal Entry` terikat pada field `company` spesifik.
+   - **Stakeholder View:** Stakeholder dapat melihat Laporan Laba/Rugi (*Profit & Loss*) dan Neraca (*Balance Sheet*) per masing-masing PT, maupun **Consolidated Financial Statement** gabungan kelima perusahaan.
+
+2. **Isolasi Gudang & Stok (Stock & Warehouse Isolation):**
+   - Setiap Gudang (*Warehouse*) diidentifikasi secara tegas pemiliknya, contoh: `Gudang Utama - PT SMS Logistic`, `Gudang Outlet - PT SMS Retail Network`.
+   - Transaksi perpindahan stok antar perusahaan menggunakan fitur bawaan **Inter-Company Transactions** (Sales Order di PT A otomatis mengenerate Purchase Order di PT B).
+
+3. **Multi-Company User Permissions:**
+   - **Staf Operasional PT A:** Diberikan `User Permission` `Company = PT A`. Mereka HANYA bisa melihat transaksi, stok, dan laporan milik PT A.
+   - **Stakeholder / Direksi Holding:** Diberikan role `SMS Holding Executive` TANPA pembatasan `Company`, sehingga bisa memantau dan membandingkan performa 5 perusahaan secara real-time.
+
+---
+
+## 📂 3. Struktur Modul & Custom App Directory Layout
 
 Aplikasi kustom `sms_aftersales` memiliki modul internal yang diisolasi berdasarkan divisi dan domain fungsi:
 
@@ -38,31 +62,16 @@ apps/sms_aftersales/
 │   ├── hooks.py                        <-- Central Frappe Integration Event Hooks
 │   ├── patches.txt                     <-- DB Migration Patch Registry
 │   ├── fixtures/                       <-- Custom Fields, Property Setters JSON
-│   │   ├── custom_field.json
-│   │   └── property_setter.json
 │   ├── insurance/                      <-- Divisi Asuransi Modul
-│   │   ├── doctype/
-│   │   │   ├── sms_insurance_policy/
-│   │   │   └── sms_insurance_claim/
 │   ├── retail_network/                 <-- Divisi Retail & Service Center Network
-│   │   ├── doctype/
-│   │   │   ├── sms_service_intake/
-│   │   │   └── sms_network_node/
 │   ├── hr_service/                     <-- Divisi HRD & Teknisi Integration
-│   │   ├── doctype/
-│   │   │   └── sms_technician_log/
 │   ├── api/                            <-- REST API Endpoints untuk Mobile/External Integrasi
-│   │   ├── v1/
-│   │   │   ├── claim.py
-│   │   │   └── intake.py
 │   └── public/                         <-- Static Assets (CSS, JS, Custom UI Widgets)
-│       ├── js/
-│       └── css/
 ```
 
 ---
 
-## 🔄 3. Integritas Hooks & Override Strategy
+## 🔄 4. Integritas Hooks & Override Strategy
 
 Untuk memperluas atau mengubah perilaku standar ERPNext tanpa mengubah kodenya, file `hooks.py` dikonfigurasi sebagai berikut:
 
@@ -71,7 +80,6 @@ Untuk memperluas atau mengubah perilaku standar ERPNext tanpa mengubah kodenya, 
 
 app_name = "sms_aftersales"
 app_title = "SMS After Sales System"
-app_publisher = "SMS Team"
 
 # 1. Export Fixtures Otomatis
 fixtures = [
@@ -80,7 +88,7 @@ fixtures = [
     {"dt": "Role Profile", "filters": [["role_profile", "like", "SMS %"]]}
 ]
 
-# 2. Event Hooks Dokumen Standar ERPNext
+# 2. Event Hooks Dokumen Standar ERPNext (Multi-Company aware)
 doc_events = {
     "Serial No": {
         "on_update": "sms_aftersales.retail_network.events.sync_serial_warranty"
@@ -89,51 +97,13 @@ doc_events = {
         "on_submit": "sms_aftersales.warehouse.events.validate_aftersales_parts_dispatch"
     }
 }
-
-# 3. Override Class Controller jika dibutuhkan (Dikalibrasi ketat)
-override_doctype_class = {
-    # "Issue": "sms_aftersales.overrides.custom_issue.CustomIssue"
-}
 ```
 
 ---
 
-## ⚡ 4. Background Processing & Caching Strategy
+## ⚡ 5. Background Processing & Caching Strategy
 
 1. **Redis Cache (Port 13000):**
-   - Digunakan untuk *in-memory caching* master data (misal daftar suku cadang populer, limit pertanggungan asuransi).
-   - Penggunaan di Python: `frappe.cache().hget("insurance_limit", policy_no)`.
-
-2. **Frappe RQ (Redis Queue - Background Jobs):**
-   - **Queue `default`:** Eksekusi pengiriman email notifikasi status garansi & pembuatan otomatis draft Journal Entry.
-   - **Queue `long`:** Generate laporan bulanan klaim asuransi lintas cabang dan sinkronisasi stok masif.
-
----
-
-## 🌐 5. REST API Architecture (Integrasi Mobile / External App)
-
-Sistem ERP-SMS menyediakan endpoint terenkripsi berbasis Token Auth / OAuth2:
-
-```
-POST /api/method/sms_aftersales.api.v1.intake.create_service_intake
-Headers:
-  Authorization: token [api_key]:[api_secret]
-  Content-Type: application/json
-
-Payload:
-{
-  "customer": "CUST-2026-0001",
-  "serial_no": "SN-IPHONE15-88329",
-  "issue_description": "Layar pecah dan baterai tidak bisa diisi daya",
-  "insurance_claim_required": 1
-}
-```
-*Response:*
-```json
-{
-  "status": "success",
-  "message": "Service Intake Created Successfully",
-  "intake_id": "INTAKE-2026-00089",
-  "claim_status": "Pending Verification"
-}
-```
+   - Caching master data per perusahaan.
+2. **Frappe RQ (Redis Queue):**
+   - Background job untuk mengkonsolidasi laporan neraca bulanan kelima anak perusahaan ke holding.

@@ -1,58 +1,53 @@
-# PRD.md — Product Requirement Document (ERP-SMS)
+# PRD.md — Product Requirement Document (ERP-SMS Multi-Company)
 
 ## 🎯 1. Objective & Product Vision
-Membangun sistem terintegrasi **ERP-SMS** berbasis ERPNext v15 untuk mengotomatisasi seluruh siklus bisnis **After-Sales Services**. Sistem harus menyelesaikan masalah fragmentasi data antar gerai retail, teknisi, bagian klaim asuransi, gudang suku cadang, dan departemen keuangan.
+Membangun sistem terintegrasi **ERP-SMS** berbasis ERPNext v15 untuk mengkonsolidasi **5 Perusahaan (Subsidiaries)** ke dalam satu sistem ERP Holding. 
+
+Sistem ini menjamin bahwa setiap anak perusahaan dapat mengelola keuangan, gudang suku cadang, dan operasionalnya secara independen atas nama badan hukum (PT) masing-masing, sementara para **Stakeholder / Direksi** memiliki akses **Consolidated Executive Dashboard** real-time untuk memantau performa grup.
 
 ---
 
-## 👥 2. User Personas & Permissions Matrix
+## 🏢 2. Arsitektur Multi-Perusahaan (5 Entities Structure)
 
-| Persona | Divisi | Peran & Tanggung Jawab | Hak Akses Utama |
-|---|---|---|---|
-| **Frontdesk Retail** | Retail | Menerima unit rusak dari customer, buat Tanda Terima Intake, cek garansi. | Create `SMS Service Intake`, View `Serial No` |
-| **Claim Assessor** | Insurance | Verifikasi polis, kelayakan pengajuan klaim, approval pertanggungan biaya. | Full Access `SMS Insurance Policy` & `Claim` |
-| **Service Lead** | HRD / Service | Alokasi tiket servis ke teknisi, pantau jam kerja & performa perbaikan. | Full Access `SMS Service Order` & `Tech Log` |
-| **Warehouse Keeper**| Warehouse | Menyiapkan sparepart, rilis stok ke lokasi servis, transfer antar gudang. | Full Access `Stock Entry`, `Material Request` |
-| **Finance Specialist**| Accounting | Verifikasi tagihan klaim asuransi, neraca cabang, buat invoice/pembayaran. | Full Access `Sales Invoice`, `Journal Entry` |
-| **Network Manager** | Network | Menambah lokasi mitra/cabang baru, memantau KPI servis jaringan. | Full Access `SMS Network Node` |
-
----
-
-## 📋 3. Functional Requirements per Division
-
-### 🛡️ A. Divisi Insurance (Asuransi)
-1. **F-INS-01:** Sistem dapat memvalidasi apakah `Serial No` unit yang dibawa memiliki `SMS Insurance Policy` aktif.
-2. **F-INS-02:** Pembuat klaim (`SMS Insurance Claim`) dapat mengunggah bukti foto kerusakan dan estimasi biaya perbaikan.
-3. **F-INS-03:** Approval Klaim bertahap:
-   - Nilai Klaim < Rp 2.000.000 ➔ Auto-approve Assessor Level 1.
-   - Nilai Klaim ≥ Rp 2.000.000 ➔ Butuh approval Insurance Manager.
-4. **F-INS-04:** Penagihan klaim bulanan ke perusahaan asuransi otomatis mengelompokkan klaim berstatus `Approved` ke dalam satu `Sales Invoice` konsolidasi.
-
-### 🛍️ B. Divisi Retail
-1. **F-RET-01:** Penerimaan unit servis (`SMS Service Intake`) mencatat foto fisik unit saat diterima, kelengkapan aksesoris, dan nomor seri.
-2. **F-RET-02:** Integrasi cetak struk/Tanda Terima Servis (Print Format thermal & PDF) dengan QR Code pelacakan status online.
-3. **F-RET-03:** Integrasi POS untuk transaksi pembayaran biaya jasa/sparepart non-asuransi secara tunai/EDC/QRIS.
-
-### 🌐 C. Divisi Network & Service Center
-1. **F-NET-01:** Pendaftaran lokasi baru (Gerai Mandiri vs Mitra Authorized) yang terhubung langsung ke Master Warehouse dan Cost Center ERPNext.
-2. **F-NET-02:** Pelacakan transit fisik unit dari Gerai Penerima (Retail) ke Pusat Servis Utama (Central Service Center) via Dokumen Transfer.
-
-### 📦 D. Divisi Warehouse & Spareparts
-1. **F-WHS-01:** *Serialized Sparepart Management:* Komponen utama (misal: Mainboard, Screen Assembly) harus memiliki nomor seri unik untuk melacak klaim garansi vendor pabrikan.
-2. **F-WHS-02:** *Auto Stock Deduction:* Pembekuan stok sparepart otomatis terjadi saat `SMS Service Order` disetujui, dan penguraian stok (*Stock Ledger Entry*) terjadi saat order dinyatakan `Completed`.
-
-### 👥 E. Divisi HRD & Teknisi
-1. **F-HR-01:** Alokasi otomatis pekerjaan servis berdasarkan kualifikasi teknisi (misal: Sertifikasi Perbaikan Handphone / Laptop / Mesin).
-2. **F-HR-02:** Perhitungan *Insentif / Bonus Teknisi* berdasarkan jumlah `SMS Service Order` selesai berstatus `Customer Sign-Off Clean`.
-
-### 💰 F. Divisi Accounting & Finance
-1. **F-ACC-01:** Otomatisasi Jurnal Piutang Asuransi: Debit Piutang Asuransi, Kredit Pendapatan Jasa Servis saat klaim `Approved`.
-2. **F-ACC-02:** Pengenalan Beban Sparepart (Cost of Goods Sold / COGS) real-time berdasarkan HPP (FIFO / Moving Average) ERPNext Stock.
+| Kode Entity | Nama Badan Hukum (Contoh) | Lingkup Operasional Utama |
+|---|---|---|
+| **HOLDING** | `SMS Group Holding` | Konsolidasi Keuangan Group & Monitoring Direksi |
+| **PT 1** | `PT SMS Aftersales Jakarta` | Operasional Service Center & Repair Jabodetabek |
+| **PT 2** | `PT SMS Aftersales Surabaya` | Operasional Service Center & Repair Jawa Timur |
+| **PT 3** | `PT SMS Insurance Partner` | Pengelolaan Polis & Penjaminan Klaim Asuransi |
+| **PT 4** | `PT SMS Logistic & Spareparts` | Gudang Pusat & Impor Suku Cadang |
+| **PT 5** | `PT SMS Retail Store Network` | Jaringan Gerai Penerimaan Unit Retail |
 
 ---
 
-## 🔒 4. Non-Functional Requirements (NFR)
+## 👥 3. User Personas & Permissions Matrix
 
-1. **Performance:** Pencarian `Serial No` dan pembuatan `SMS Service Intake` harus merespons di bawah **1.5 detik**.
-2. **Availability:** Sistem harus mampu memproses 500+ transaksi intake harian lintas 20 cabang tanpa deadlock database.
-3. **Security:** Seluruh perubahan status klaim dan penghapusan item transaksi terekam dalam **Audit Trail Log** bawaan Frappe.
+| Persona | Entitas (Company Scope) | Hak Akses Utama |
+|---|---|---|
+| **Stakeholder / Director** | 🌐 All 5 Companies | Executive Dashboard, Consolidated Financial Statements, Group Stock View |
+| **Branch Manager PT 1** | 🏢 Restricted to PT 1 | Full Operational Access for PT 1 only |
+| **Insurance Officer PT 3** | 🏢 Restricted to PT 3 | Management of Policies & Claims for PT 3 |
+| **Warehouse Keeper PT 4** | 🏢 Restricted to PT 4 | Central Parts Warehouse Stock Entries & Inter-Company Transfer |
+| **Retail Staff PT 5** | 🏢 Restricted to PT 5 | Service Intake at PT 5 Outlets |
+
+---
+
+## 📋 4. Key Multi-Company Functional Requirements
+
+### 📊 A. Multi-Company Financial Consolidation (Holding Stakeholders)
+1. **F-MC-01:** Stakeholder dapat melihat Laporan Laba/Rugi (*Profit & Loss*) dan Neraca (*Balance Sheet*) per masing-masing PT maupun laporan konsolidasi gabungan (Holding).
+2. **F-MC-02:** *Inter-Company Auto Elimination:* Transaksi penjualan/pembelian internal antar 5 anak perusahaan otomatis ditandai sebagai *Inter-Company Trade* untuk keperluan eliminasi konsolidasi akuntansi.
+
+### 📦 B. Inter-Company Stock Transfer (PT Logistic ➔ PT Service)
+1. **F-MC-03:** Ketika PT 1 (Service Center) membutuhkan sparepart dari PT 4 (Gudang Pusat Logistik), sistem menyediakan workflow **Inter-Company Purchase Order (PO) ➔ Sales Order (SO)** otomatis.
+2. **F-MC-04:** Penelusuran *Serial No* sparepart bersifat global sehingga riwayat garansi pabrikan tetap terlacak meskipun barang telah dijual antar anak perusahaan.
+
+### 🛡️ C. Cross-Company Insurance Claim Settlement (PT Insurance ➔ PT Repair)
+1. **F-MC-05:** Ketika klaim asuransi pelanggan disetujui di PT 3 (Insurance), sistem otomatis memicu pembentukan piutang di PT 1 (Service Center yang mengerjakan unit) dan utang klaim di PT 3.
+
+---
+
+## 🔒 5. Non-Functional Requirements (NFR)
+
+1. **Strict Data Privacy:** Staf dari PT A sama sekali tidak boleh melihat dokumen transaksi atau saldo bank milik PT B.
+2. **Consolidated Performance:** Dashboard Stakeholder yang menggabungkan analytics 5 anak perusahaan harus memuat data dalam waktu di bawah **2.5 detik**.
