@@ -24,11 +24,13 @@ services:
 
   development:
     image: frappe/bench:latest
-    command: sleep infinity
+    user: root
+    command: bash /.docker/init-bench.sh sleep infinity
     environment:
       - DEVELOPER_MODE=1
     volumes:
       - .:/home/frappe/frappe-bench/apps/sms_aftersales
+      - .docker:/.docker
       - bench-sites:/home/frappe/frappe-bench/sites
     ports:
       - "${HTTP_PORT:-8000}:8000"
