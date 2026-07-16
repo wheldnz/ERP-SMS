@@ -1,0 +1,45 @@
+version: "3.8"
+
+services:
+  mariadb:
+    image: mariadb:10.6
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-admin}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+
+  redis-cache:
+    image: redis:6.2-alpine
+    ports:
+      - "13000:6379"
+
+  redis-queue:
+    image: redis:6.2-alpine
+    ports:
+      - "11000:6379"
+
+  development:
+    image: frappe/bench:latest
+    command: bench start
+    environment:
+      - DEVELOPER_MODE=1
+    volumes:
+      - .:/home/frappe/frappe-bench/apps/sms_aftersales
+      - bench-sites:/home/frappe/frappe-bench/sites
+    ports:
+      - "${HTTP_PORT:-8000}:8000"
+      - "9000:9000"
+    depends_on:
+      - mariadb
+      - redis-cache
+      - redis-queue
+
+volumes:
+  mariadb-data:
+  bench-sites:
