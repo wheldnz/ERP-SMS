@@ -1,0 +1,18 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "sms_aftersales"
+authors = [
+    { name = "SMS Developer Team", email = "dev@sms-aftersales.local" }
+]
+description = "SMS After Sales Enterprise System - Custom Module for ERPNext v15"
+requires-python = ">=3.10"
+readme = "README.md"
+dynamic = ["version"]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/wheldnz/ERP-SMS"
+Repository = "https://github.com/wheldnz/ERP-SMS.git"

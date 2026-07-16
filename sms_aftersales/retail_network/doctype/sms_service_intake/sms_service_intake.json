@@ -1,0 +1,113 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "INT-.YYYY.-.#####",
+ "creation": "2026-07-16 15:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "network_node",
+  "customer",
+  "serial_no",
+  "is_insurance_covered",
+  "insurance_policy",
+  "physical_condition",
+  "reported_issue",
+  "status"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Perusahaan (PT Recipient)",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "network_node",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Cabang / Outlet Penerima",
+   "options": "SMS Network Node",
+   "reqd": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Nama Pelanggan",
+   "options": "Customer",
+   "reqd": 1
+  },
+  {
+   "fieldname": "serial_no",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Nomor Seri Unit Rusak",
+   "options": "Serial No",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_insurance_covered",
+   "fieldtype": "Check",
+   "label": "Ter-cover Asuransi Active?"
+  },
+  {
+   "depends_on": "eval:doc.is_insurance_covered==1",
+   "fieldname": "insurance_policy",
+   "fieldtype": "Link",
+   "label": "Nomor Polis Asuransi",
+   "options": "SMS Insurance Policy"
+  },
+  {
+   "fieldname": "physical_condition",
+   "fieldtype": "Small Text",
+   "label": "Kondisi Fisik & Kelengkapan",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reported_issue",
+   "fieldtype": "Text",
+   "label": "Keluhan Kerusakan",
+   "reqd": 1
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status Intake",
+   "options": "Draft\nInspection\nIn Repair\nCompleted\nDelivered",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-07-16 15:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Retail Network",
+ "name": "SMS Service Intake",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
